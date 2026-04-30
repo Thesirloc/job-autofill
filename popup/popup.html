@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>JobFill</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>JobFill</h1>
+    <span id="ats-badge">—</span>
+  </header>
+  <main>
+    <section id="status">Detecting site…</section>
+    <section id="job-context" class="muted"></section>
+
+    <label class="row">
+      <span>Resume</span>
+      <select id="resume-select"></select>
+    </label>
+
+    <div class="actions">
+      <button id="btn-fill" class="primary">Autofill form</button>
+      <button id="btn-attach">Attach resume</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+  </main>
+  <footer>
+    <a href="#" id="open-options">Open settings</a>
+  </footer>
+  <script src="../lib/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>JobFill — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JobFill</h1>
+    <p class="sub">Your profile, resumes, and AI settings — all stored locally in your browser.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="profile">Profile</button>
+    <button class="tab" data-tab="resumes">Resumes</button>
+    <button class="tab" data-tab="snippets">Answer snippets</button>
+    <button class="tab" data-tab="ai">AI / API</button>
+    <button class="tab" data-tab="data">Data</button>
+  </nav>
+
+  <!-- Profile -->
+  <section id="tab-profile" class="tab-pane active">
+    <h2>Identity</h2>
+    <div class="grid">
+      <label>First name <input id="firstName" /></label>
+      <label>Last name <input id="lastName" /></label>
+      <label>Email <input id="email" type="email" /></label>
+      <label>Phone <input id="phone" /></label>
+    </div>
+
+    <h2>Address</h2>
+    <div class="grid">
+      <label>City <input id="city" /></label>
+      <label>State / Region <input id="state" /></label>
+      <label>Country <input id="country" /></label>
+      <label>Postal code <input id="postal" /></label>
+    </div>
+
+    <h2>Links</h2>
+    <div class="grid">
+      <label>LinkedIn <input id="linkedin" /></label>
+      <label>GitHub <input id="github" /></label>
+      <label>Portfolio <input id="portfolio" /></label>
+      <label>Twitter / X <input id="twitter" /></label>
+    </div>
+
+    <h2>Work authorization</h2>
+    <div class="grid">
+      <label>Authorized to work?
+        <select id="authorized"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </label>
+      <label>Need sponsorship?
+        <select id="sponsorship"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </label>
+    </div>
+
+    <h2>EEO / demographics (optional)</h2>
+    <div class="grid">
+      <label>Gender <input id="gender" /></label>
+      <label>Race / ethnicity <input id="race" /></label>
+      <label>Veteran status <input id="veteran" /></label>
+      <label>Disability status <input id="disability" /></label>
+    </div>
+
+    <h2>Profile summary</h2>
+    <p class="hint">A 2–4 sentence pitch the AI will use as background for drafted answers.</p>
+    <textarea id="summary" rows="4" placeholder="Senior backend engineer with 6 years building distributed systems at..."></textarea>
+
+    <h2>Work history</h2>
+    <p class="hint">Most recent first. The first entry is used for "current company / title" autofill.</p>
+    <div id="work-list"></div>
+    <button class="ghost" id="add-work">+ Add role</button>
+
+    <h2>Education</h2>
+    <div id="edu-list"></div>
+    <button class="ghost" id="add-edu">+ Add degree</button>
+
+    <h2>Skills</h2>
+    <input id="skills" placeholder="Python, Go, Postgres, Kafka, ..." />
+
+    <div class="save-bar">
+      <button class="primary" id="save-profile">Save profile</button>
+      <span id="profile-saved" class="saved"></span>
+    </div>
+  </section>
+
+  <!-- Resumes -->
+  <section id="tab-resumes" class="tab-pane">
+    <h2>Resumes</h2>
+    <p class="hint">Upload one or more resumes. Tag each (e.g. "Backend", "AI/ML") so you can pick the right one per application.</p>
+    <div class="upload">
+      <label>Tag <input id="resume-tag" placeholder="e.g. Backend" /></label>
+      <input id="resume-file" type="file" accept=".pdf,.doc,.docx" />
+      <button class="primary" id="resume-upload">Upload</button>
+    </div>
+    <div id="resume-list"></div>
+  </section>
+
+  <!-- Snippets -->
+  <section id="tab-snippets" class="tab-pane">
+    <h2>Reusable answer snippets</h2>
+    <p class="hint">Boilerplate the AI can draw from when drafting answers (e.g. "Why this company", "Greatest accomplishment", salary expectations).</p>
+    <div id="snippet-list"></div>
+    <button class="ghost" id="add-snippet">+ Add snippet</button>
+    <div class="save-bar">
+      <button class="primary" id="save-snippets">Save snippets</button>
+      <span id="snippets-saved" class="saved"></span>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section id="tab-ai" class="tab-pane">
+    <h2>AI provider</h2>
+    <p class="hint">Used only when you click "Draft with AI" on a long-answer field. Keys are stored locally and sent only to the provider you select.</p>
+    <div class="grid">
+      <label>Provider
+        <select id="llm-provider">
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic</option>
+          <option value="custom">Custom (OpenAI-compatible)</option>
+        </select>
+      </label>
+      <label>Model <input id="llm-model" placeholder="e.g. gpt-4o-mini" /></label>
+      <label class="full">API key <input id="llm-api-key" type="password" placeholder="sk-..." /></label>
+      <label class="full" id="custom-endpoint-row" style="display:none;">
+        Endpoint base URL <input id="llm-endpoint" placeholder="https://api.example.com/v1" />
+      </label>
+    </div>
+    <div class="save-bar">
+      <button class="primary" id="save-ai">Save AI settings</button>
+      <button id="test-ai">Test connection</button>
+      <span id="ai-saved" class="saved"></span>
+    </div>
+    <pre id="ai-test-out" class="muted small"></pre>
+  </section>
+
+  <!-- Data -->
+  <section id="tab-data" class="tab-pane">
+    <h2>Backup & restore</h2>
+    <p class="hint">Profile, resumes, snippets, and settings are exported to a JSON file you can re-import on another machine.</p>
+    <div class="actions">
+      <button id="export">Export all data</button>
+      <input id="import-file" type="file" accept=".json" style="display:none" />
+      <button id="import">Import from file</button>
+      <button class="danger" id="clear">Clear all data</button>
+    </div>
+    <h2>Recent applications</h2>
+    <div id="history"></div>
+  </section>
+</div>
+<script src="../lib/storage.js"></script>
+<script src="options.js"></script>
+</body>
+</html>
