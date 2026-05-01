@@ -438,7 +438,7 @@
         <a href="#features">Features</a>
         <a href="#how">How it works</a>
         <a href="#privacy">Privacy</a>
-        <a href="#install" class="nav-cta">Install</a>
+        <a href="#install" data-install class="nav-cta">Install</a>
       </div>
     </div>
   </nav>
@@ -453,7 +453,7 @@
         with the LLM you choose.
       </p>
       <div class="cta-row">
-        <a href="#install" class="btn btn-primary">Install for Chrome</a>
+        <a href="#install" data-install class="btn btn-primary">Install for Chrome</a>
         <a href="#how" class="btn btn-ghost">See how it works →</a>
       </div>
       <p class="trust">
@@ -604,6 +604,9 @@
           <p>Nothing is sent to any server controlled by this extension's author. There is no such server.</p>
         </div>
       </div>
+      <p style="margin-top: 22px; font-size: 14px;">
+        <a href="privacy.html" style="color: var(--accent);">Read the full privacy policy →</a>
+      </p>
     </div>
   </section>
 
@@ -632,9 +635,25 @@
       <div class="footer-meta">
         <span>v0.1.0 · Manifest V3</span>
         <span>·</span>
-        <a href="#privacy">Privacy</a>
+        <a href="privacy.html">Privacy</a>
       </div>
     </div>
   </footer>
+
+  <script>
+    // === EDIT ME after publishing to the Chrome Web Store ===
+    // Set this to your full Chrome Web Store listing URL, e.g.
+    //   'https://chromewebstore.google.com/detail/jobfill/abcdef0123456789abcdef0123456789'
+    // Until it is set, install buttons fall back to scrolling to the in-page #install section.
+    const INSTALL_URL = '';
+
+    document.querySelectorAll('a[data-install]').forEach((el) => {
+      if (INSTALL_URL) {
+        el.href = INSTALL_URL;
+        el.target = '_blank';
+        el.rel = 'noopener';
+      }
+    });
+  </script>
 </body>
 </html>
