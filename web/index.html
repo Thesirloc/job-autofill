@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JobFill — AI Job Application Autofill for Chrome</title>
+  <meta name="description" content="A Chrome extension that fills job applications on Greenhouse, Lever, and Workday from your profile and resumes. Optional AI drafts for open-ended questions. Local-first." />
+  <style>
+    /* JobFill landing page — matches the extension popup/options palette. */
+
+    * { box-sizing: border-box; }
+
+    :root {
+      --ink: #111827;
+      --ink-soft: #374151;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --bg: #ffffff;
+      --bg-soft: #f9fafb;
+      --bg-band: #f3f4f6;
+      --accent: #2563eb;
+      --ok: #047857;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
+      --shadow-md: 0 10px 30px rgba(17, 24, 39, 0.08);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    code {
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      background: #f3f4f6;
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: var(--ink-soft);
+    }
+    strong { color: var(--ink); }
+
+    /* Logo */
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ink);
+      color: #fff;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -0.02em;
+    }
+    .logo-sm { width: 24px; height: 24px; font-size: 11px; }
+    .logo-xs { width: 20px; height: 20px; font-size: 10px; }
+
+    /* ---------- Nav ---------- */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: saturate(180%) blur(8px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .nav-links {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-cta {
+      background: var(--ink);
+      color: #fff !important;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .nav-cta:hover { filter: brightness(1.12); }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 72px 24px 56px;
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 56px;
+      align-items: center;
+    }
+    .kicker {
+      display: inline-block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: var(--bg-band);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0 0 18px;
+      font-size: 44px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      font-size: 17px;
+      color: var(--ink-soft);
+      margin: 0 0 28px;
+      max-width: 540px;
+    }
+    .cta-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 11px 18px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: filter 0.12s, transform 0.06s;
+      text-decoration: none;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--ink); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.12); }
+    .btn-secondary { background: #4b5563; color: #fff; }
+    .btn-secondary:hover { filter: brightness(1.1); }
+    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+    .btn-ghost:hover { background: var(--bg-band); }
+    .btn-sm { padding: 7px 12px; font-size: 12px; }
+
+    .trust {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ok);
+      display: inline-block;
+    }
+
+    /* Hero card mock */
+    .hero-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      transform: rotate(0.3deg);
+    }
+    .hero-card-head {
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+    }
+    .hero-card-title { font-size: 13px; font-weight: 600; }
+    .hero-card-badge {
+      margin-left: auto;
+      font-size: 11px;
+      border: 1px solid #374151;
+      border-radius: 999px;
+      padding: 2px 10px;
+      color: #d1d5db;
+    }
+    .hero-card-body { padding: 16px; }
+    .hero-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--line);
+      margin-bottom: 12px;
+    }
+    .hero-row strong { color: var(--ink); }
+    .hero-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 12px;
+    }
+    .hero-field select {
+      font: inherit;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 13px;
+      color: var(--ink);
+      padding: 7px 9px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .hero-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .hero-msg { font-size: 12px; color: var(--ok); }
+
+    /* ---------- Band ---------- */
+    .band {
+      background: var(--bg-band);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .band-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .band-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    .band-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      font-size: 14px;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .band-list li::before {
+      content: "■";
+      color: #d1d5db;
+      margin-right: 8px;
+      font-size: 9px;
+      vertical-align: middle;
+    }
+
+    /* ---------- Sections ---------- */
+    .section { padding: 72px 0; }
+    .section-alt { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .section-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 0 28px;
+      font-weight: 600;
+    }
+
+    /* Feature grid */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 16px; }
+    .card p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+
+    /* Steps */
+    .steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 18px;
+    }
+    .steps li {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 16px;
+      align-items: start;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .steps h3 { margin: 0 0 4px; font-size: 16px; }
+    .steps p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+    .steps em { font-style: normal; font-weight: 600; color: var(--ink); }
+
+    /* Privacy */
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px 32px;
+    }
+    .privacy-grid h3 { margin: 0 0 6px; font-size: 15px; }
+    .privacy-grid p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+
+    /* Install */
+    .install-steps {
+      margin: 0 0 24px;
+      padding-left: 22px;
+      color: var(--ink-soft);
+      font-size: 15px;
+    }
+    .install-steps li { margin-bottom: 6px; }
+    .caveat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 3px solid #b45309;
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+
+    /* ---------- Footer ---------- */
+    .footer {
+      background: var(--ink);
+      color: #d1d5db;
+      padding: 28px 0;
+      font-size: 13px;
+    }
+    .footer-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .footer-meta {
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: #9ca3af;
+    }
+    .footer-meta a { color: #d1d5db; }
+    .footer-meta a:hover { color: #fff; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 880px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 48px;
+        gap: 36px;
+      }
+      .hero h1 { font-size: 34px; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .privacy-grid { grid-template-columns: 1fr; }
+      .nav-links { gap: 14px; }
+      .nav-links a:not(.nav-cta) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="brand">
+        <span class="logo logo-sm">JF</span>
+        <span>JobFill</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#install" class="nav-cta">Install</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="kicker">Chrome extension · Manifest V3</span>
+      <h1>Apply to jobs without filling the same form twenty times.</h1>
+      <p class="lede">
+        JobFill autofills applications on <strong>Greenhouse</strong>, <strong>Lever</strong>, and <strong>Workday</strong>
+        from your saved profile and resumes — and drafts thoughtful answers to open-ended questions
+        with the LLM you choose.
+      </p>
+      <div class="cta-row">
+        <a href="#install" class="btn btn-primary">Install for Chrome</a>
+        <a href="#how" class="btn btn-ghost">See how it works →</a>
+      </div>
+      <p class="trust">
+        <span class="dot"></span>
+        Local-first. Your profile and API key never leave your machine, except when you ask the AI to draft.
+      </p>
+    </div>
+    <div class="hero-card" aria-hidden="true">
+      <div class="hero-card-head">
+        <span class="hero-card-title">JobFill</span>
+        <span class="hero-card-badge">Greenhouse</span>
+      </div>
+      <div class="hero-card-body">
+        <div class="hero-row"><span>Status</span><strong>Form detected · 14 fields</strong></div>
+        <label class="hero-field">
+          <span>Resume</span>
+          <select disabled><option>Backend — 2026.pdf</option></select>
+        </label>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-sm" type="button">Autofill form</button>
+          <button class="btn btn-secondary btn-sm" type="button">Attach resume</button>
+        </div>
+        <div class="hero-msg">14 / 14 filled · 1 AI-draftable answer</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="band">
+    <div class="band-inner">
+      <span class="band-label">Works on</span>
+      <ul class="band-list">
+        <li>Greenhouse</li>
+        <li>Lever</li>
+        <li>Workday</li>
+        <li>Embedded boards</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <div class="section-inner">
+      <h2 class="section-title">What it does</h2>
+      <div class="grid-3">
+        <article class="card">
+          <h3>One-click autofill</h3>
+          <p>
+            Name, email, phone, links, location, current role, education, work authorization, and EEO fields —
+            mapped from your profile in a single click.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Tagged resumes</h3>
+          <p>
+            Upload multiple resumes (Backend, Frontend, AI/ML, …), tag each, and pick the right one
+            for the role from the popup or the on-page panel.
+          </p>
+        </article>
+        <article class="card">
+          <h3>AI drafts on demand</h3>
+          <p>
+            For long-answer prompts like "Why this company?", a "Draft with AI" button appears above the textarea.
+            Bring your own OpenAI, Anthropic, or compatible key.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Resume upload that works</h3>
+          <p>
+            Files are wired through <code>DataTransfer</code>, so they attach correctly to hidden file inputs
+            behind styled "Attach" buttons.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Smart field matching</h3>
+          <p>
+            Regexes against label, name, placeholder, <code>aria-label</code>, <code>data-automation-id</code>, and
+            <code>autocomplete</code> attributes — robust to renaming.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Bring your own model</h3>
+          <p>
+            Use <code>gpt-4o-mini</code>, <code>claude-haiku-4-5</code>, or any OpenAI-compatible endpoint.
+            Test the connection from the options page before relying on it.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" class="section section-alt">
+    <div class="section-inner">
+      <h2 class="section-title">How it works</h2>
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <div>
+            <h3>Set up once</h3>
+            <p>Open the options page and fill in your profile, work history, education, and resumes.
+              Add your AI provider key if you want drafted answers.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div>
+            <h3>Open an application</h3>
+            <p>Visit any Greenhouse, Lever, or Workday job page. A small JobFill panel appears in the bottom-right corner.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div>
+            <h3>Click <em>Autofill form</em></h3>
+            <p>Pick the right resume, then let JobFill populate the standard fields. Click <em>Attach resume</em>
+              to upload the selected file.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div>
+            <h3>Draft, review, submit</h3>
+            <p>For open-ended questions, click <em>Draft with AI</em>. <strong>Always review</strong> the draft before
+              you submit — the prompt leaves <code>[bracketed placeholders]</code> rather than invent facts.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="privacy" class="section">
+    <div class="section-inner privacy">
+      <h2 class="section-title">Privacy by default</h2>
+      <div class="privacy-grid">
+        <div>
+          <h3>Local-only storage</h3>
+          <p>Profile, resumes, snippets, and API keys live in <code>chrome.storage.local</code> on your machine.</p>
+        </div>
+        <div>
+          <h3>No backend</h3>
+          <p>The extension makes outbound calls <strong>only</strong> when you click "Draft with AI" or
+            "Test connection" — and only to the provider you configured.</p>
+        </div>
+        <div>
+          <h3>Export &amp; clear</h3>
+          <p>Use <em>Data → Export all data</em> to back up. <em>Clear all data</em> wipes everything.</p>
+        </div>
+        <div>
+          <h3>You're in control</h3>
+          <p>Nothing is sent to any server controlled by this extension's author. There is no such server.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="section section-alt">
+    <div class="section-inner">
+      <h2 class="section-title">Install</h2>
+      <ol class="install-steps">
+        <li>Open <code>chrome://extensions</code> in Chrome.</li>
+        <li>Toggle <strong>Developer mode</strong> on (top right).</li>
+        <li>Click <strong>Load unpacked</strong> and select the <code>job-autofill/</code> folder.</li>
+        <li>The options page opens automatically the first time. Add your profile, resumes, and AI key.</li>
+      </ol>
+      <p class="caveat">
+        <strong>A note on Workday:</strong> single-page navigation, custom widgets, and per-tenant theming mean some fields
+        won't be detected. Autofill is best-effort — check every page before you submit.
+      </p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo logo-xs">JF</span>
+        <span>JobFill</span>
+      </div>
+      <div class="footer-meta">
+        <span>v0.1.0 · Manifest V3</span>
+        <span>·</span>
+        <a href="#privacy">Privacy</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
