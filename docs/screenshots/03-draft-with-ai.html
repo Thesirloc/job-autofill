@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>JobFill — Draft with AI demo</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f6f6f6;
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.5;
+    width: 1280px;
+    height: 800px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Greenhouse-ish app shell */
+  .app-bar {
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand-logo {
+    width: 36px; height: 36px;
+    background: #0f766e;
+    color: #fff;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .brand-name { font-weight: 600; font-size: 15px; }
+  .gh-bar { margin-left: auto; font-size: 12px; color: #6b7280; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    height: calc(800px - 65px);
+  }
+
+  /* Left rail with role meta */
+  .role-rail {
+    background: #fff;
+    border-right: 1px solid #e5e5e5;
+    padding: 22px 24px;
+  }
+  .role-title { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+  .role-meta { font-size: 13px; color: #6b7280; margin: 0 0 18px; }
+  .role-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+  .role-tag {
+    font-size: 11px;
+    color: #374151;
+    background: #f3f4f6;
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+  .progress-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+  .progress-list li {
+    padding: 7px 0;
+    color: #6b7280;
+    border-top: 1px solid #f0f0f0;
+  }
+  .progress-list li.done { color: #047857; }
+  .progress-list li.current { color: #111827; font-weight: 600; }
+  .progress-list li::before {
+    content: "○ ";
+    color: #d1d5db;
+  }
+  .progress-list li.done::before { content: "✓ "; color: #10b981; }
+  .progress-list li.current::before { content: "● "; color: #2563eb; }
+
+  /* Main form */
+  .form-area {
+    padding: 26px 40px 40px;
+    overflow-y: hidden;
+  }
+  .form-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .field { display: flex; flex-direction: column; }
+  .field label {
+    font-size: 12px;
+    color: #374151;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .field input {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    background: #fff;
+    color: #111827;
+  }
+  .field input.filled { background: #f0fdf4; border-color: #bbf7d0; }
+
+  .question-block { margin-top: 18px; }
+  .question-block .field label {
+    font-size: 13px;
+    color: #111827;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .question-block .hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 10px;
+  }
+
+  textarea.app-textarea {
+    width: 100%;
+    min-height: 168px;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #111827;
+    background: #fff;
+    resize: vertical;
+  }
+
+  /* JobFill in-page UI — kept in sync with content/content.css */
+  .jf-ai-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 6px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .jf-ai-wrap input.jf-ai-instructions {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #111827;
+    background: #fff;
+    border: 1px solid #c7d2fe;
+    border-radius: 6px;
+    font-family: inherit;
+  }
+  .jf-ai-wrap input.jf-ai-instructions::placeholder { color: #9ca3af; }
+  button.jf-ai-btn {
+    display: inline-block;
+    flex: 0 0 auto;
+    margin: 0;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* JobFill floating panel — bottom-right */
+  #jobfill-panel {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 280px;
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow: hidden;
+  }
+  #jobfill-panel .jf-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    background: #111827;
+    color: #f9fafb;
+  }
+  #jobfill-panel .jf-logo { font-weight: 600; }
+  #jobfill-panel .jf-ats {
+    margin-left: auto;
+    font-size: 11px;
+    color: #d1d5db;
+    padding: 2px 6px;
+    border: 1px solid #374151;
+    border-radius: 999px;
+  }
+  #jobfill-panel .jf-x {
+    background: transparent; color: #f9fafb; border: 0;
+    font-size: 18px; line-height: 1; padding: 0 4px;
+  }
+  #jobfill-panel .jf-body { padding: 12px; }
+  #jobfill-panel .jf-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  #jobfill-panel .jf-row > span {
+    font-size: 11px; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  #jobfill-panel select.jf-resume {
+    padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px;
+    background: #fff; font-size: 13px;
+  }
+  #jobfill-panel .jf-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  #jobfill-panel .jf-btn {
+    background: #111827; color: #fff; border: 0; border-radius: 6px;
+    padding: 8px 10px; font-size: 12px; font-weight: 500;
+  }
+  #jobfill-panel .jf-attach { background: #4b5563; }
+  #jobfill-panel .jf-status {
+    margin-top: 10px; min-height: 14px; font-size: 12px; color: #047857;
+  }
+  #jobfill-panel .jf-footer {
+    padding: 8px 12px;
+    border-top: 1px solid #f3f4f6;
+    background: #f9fafb;
+    font-size: 11px;
+  }
+  #jobfill-panel .jf-options { color: #2563eb; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <span class="brand-logo">AR</span>
+  <div>
+    <div class="brand-name">Acme Robotics</div>
+    <div style="font-size:11px;color:#6b7280;">Careers</div>
+  </div>
+  <div class="gh-bar">Powered by Greenhouse</div>
+</header>
+
+<div class="page">
+  <aside class="role-rail">
+    <h1 class="role-title">Senior Backend Engineer</h1>
+    <p class="role-meta">San Francisco, CA · Hybrid · Full-time</p>
+    <div class="role-tags">
+      <span class="role-tag">Go</span>
+      <span class="role-tag">Postgres</span>
+      <span class="role-tag">Kafka</span>
+      <span class="role-tag">Distributed systems</span>
+    </div>
+    <ul class="progress-list">
+      <li class="done">Personal information</li>
+      <li class="done">Resume &amp; links</li>
+      <li class="current">Application questions</li>
+      <li>Voluntary disclosures</li>
+      <li>Review &amp; submit</li>
+    </ul>
+  </aside>
+
+  <main class="form-area">
+    <p class="form-section-title">Application questions</p>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Full name</label>
+        <input class="filled" value="Sushant Singh" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input class="filled" value="sushant@example.com" />
+      </div>
+    </div>
+
+    <div class="question-block">
+      <div class="field">
+        <label>Why are you interested in this role at Acme Robotics?</label>
+        <p class="hint">~150 words. We read every response.</p>
+
+        <div class="jf-ai-wrap">
+          <input
+            class="jf-ai-instructions"
+            value="Mention the order-routing rewrite from Lumen and tie it to Acme's fleet-control problem"
+          />
+          <button class="jf-ai-btn">Draft with AI</button>
+        </div>
+
+        <textarea class="app-textarea">At Lumen I rebuilt the order-routing service in Go, moving it off a synchronous Postgres queue onto Kafka with idempotent consumers. p99 routing latency went from 480ms to 95ms and we stopped dropping orders during regional failovers. That work is what pulled me toward Acme — the JD's mention of a fleet-control plane that has to stay coordinated across regions is the same shape of problem at a much larger scale.
+
+The other reason is the team profile. I want to be a senior IC on a small backend team, not a tech lead with calendar Tetris. The Acme posting is explicit that this role owns end-to-end design for the routing layer, which is the part of my Lumen work I enjoyed most. Happy to walk through the [add specific Acme system from JD] decision tradeoffs in an interview.</textarea>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="jobfill-panel">
+  <div class="jf-header">
+    <span class="jf-logo">JobFill</span>
+    <span class="jf-ats">Greenhouse</span>
+    <button class="jf-x" type="button">×</button>
+  </div>
+  <div class="jf-body">
+    <label class="jf-row">
+      <span>Resume</span>
+      <select class="jf-resume">
+        <option>Backend — sushant_2026.pdf</option>
+      </select>
+    </label>
+    <div class="jf-actions">
+      <button class="jf-btn jf-fill" type="button">Autofill form</button>
+      <button class="jf-btn jf-attach" type="button">Attach resume</button>
+    </div>
+    <div class="jf-status">14 / 14 fields filled · 1 AI-draftable answer</div>
+  </div>
+  <div class="jf-footer">
+    <a href="#" class="jf-options">Edit profile / settings</a>
+  </div>
+</div>
+
+</body>
+</html>

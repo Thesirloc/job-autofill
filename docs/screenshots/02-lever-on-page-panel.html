@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>JobFill — Lever shot</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fafafa;
+    color: #1f2328;
+    font-size: 14px;
+    line-height: 1.5;
+    width: 1280px;
+    height: 800px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Lever-style header — minimal, centered */
+  .lever-header {
+    background: #fff;
+    border-bottom: 1px solid #ececec;
+    padding: 22px 0 18px;
+    text-align: center;
+  }
+  .lever-company-logo {
+    width: 44px; height: 44px; margin: 0 auto 8px;
+    background: #1f2937; color: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
+  }
+  .lever-company { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+  .lever-role { font-size: 22px; font-weight: 500; margin: 2px 0 4px; color: #1f2328; }
+  .lever-meta { font-size: 13px; color: #6b7280; }
+  .lever-meta span + span::before { content: " · "; color: #d1d5db; }
+
+  .lever-tabs {
+    border-bottom: 1px solid #ececec;
+    background: #fff;
+    text-align: center;
+    padding: 0 0 0;
+  }
+  .lever-tabs a {
+    display: inline-block;
+    padding: 14px 18px;
+    color: #6b7280;
+    font-size: 13px;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+  }
+  .lever-tabs a.active {
+    color: #1f2328; font-weight: 600; border-bottom-color: #1f2328;
+  }
+
+  .lever-form {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px 24px 32px;
+  }
+  .lever-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin: 0 0 16px;
+    font-weight: 600;
+  }
+  .lever-field { margin-bottom: 16px; }
+  .lever-field label {
+    display: block;
+    font-size: 13px; color: #1f2328;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .lever-field input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+    font: inherit; font-size: 14px;
+    background: #fff;
+  }
+  .lever-field input.filled { background: #f0fdf4; border-color: #bbf7d0; }
+  .lever-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+
+  .lever-resume-block {
+    border: 1px dashed #d4d4d4;
+    border-radius: 6px;
+    padding: 18px;
+    text-align: center;
+    background: #fafafa;
+    margin-bottom: 16px;
+  }
+  .lever-resume-block.attached {
+    border-style: solid;
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    text-align: left;
+  }
+  .lever-resume-block .filename {
+    font-size: 13px; font-weight: 500; color: #047857;
+  }
+  .lever-resume-block .meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+  /* JobFill panel */
+  #jobfill-panel {
+    position: absolute;
+    bottom: 16px; right: 16px;
+    width: 280px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
+    font-size: 13px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #jobfill-panel .jf-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; background: #111827; color: #f9fafb;
+  }
+  #jobfill-panel .jf-logo { font-weight: 600; }
+  #jobfill-panel .jf-ats {
+    margin-left: auto; font-size: 11px; color: #d1d5db;
+    padding: 2px 6px; border: 1px solid #374151; border-radius: 999px;
+  }
+  #jobfill-panel .jf-x { background: transparent; color: #f9fafb; border: 0; font-size: 18px; }
+  #jobfill-panel .jf-body { padding: 12px; }
+  #jobfill-panel .jf-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  #jobfill-panel .jf-row > span {
+    font-size: 11px; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  #jobfill-panel select.jf-resume {
+    padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px;
+    background: #fff; font-size: 13px;
+  }
+  #jobfill-panel .jf-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  #jobfill-panel .jf-btn {
+    background: #111827; color: #fff; border: 0; border-radius: 6px;
+    padding: 8px 10px; font-size: 12px; font-weight: 500;
+  }
+  #jobfill-panel .jf-attach {
+    background: #4b5563;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35);
+  }
+  #jobfill-panel .jf-status {
+    margin-top: 10px; font-size: 12px; color: #047857; font-weight: 500;
+  }
+  #jobfill-panel .jf-footer {
+    padding: 8px 12px; border-top: 1px solid #f3f4f6;
+    background: #f9fafb; font-size: 11px;
+  }
+  #jobfill-panel .jf-options { color: #2563eb; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="lever-header">
+  <div class="lever-company-logo">NX</div>
+  <div class="lever-company">Nexus Labs</div>
+  <h1 class="lever-role">Founding Backend Engineer</h1>
+  <div class="lever-meta">
+    <span>Engineering</span>
+    <span>New York · Remote OK</span>
+    <span>Full-time</span>
+  </div>
+</div>
+
+<div class="lever-tabs">
+  <a href="#">Job description</a>
+  <a href="#" class="active">Apply for this job</a>
+</div>
+
+<div class="lever-form">
+  <p class="lever-section-title">Submit your application</p>
+
+  <div class="lever-resume-block attached">
+    <div class="filename">📎 sushant_2026_backend.pdf</div>
+    <div class="meta">182 KB · attached via JobFill</div>
+  </div>
+
+  <div class="lever-field">
+    <label>Full name</label>
+    <input class="filled" value="Sushant Singh" />
+  </div>
+  <div class="lever-row">
+    <div class="lever-field">
+      <label>Email</label>
+      <input class="filled" value="sushant@example.com" />
+    </div>
+    <div class="lever-field">
+      <label>Phone</label>
+      <input class="filled" value="+1 (415) 555-0142" />
+    </div>
+  </div>
+  <div class="lever-field">
+    <label>Current company</label>
+    <input class="filled" value="Lumen" />
+  </div>
+  <div class="lever-row">
+    <div class="lever-field">
+      <label>LinkedIn URL</label>
+      <input class="filled" value="https://linkedin.com/in/sushant" />
+    </div>
+    <div class="lever-field">
+      <label>GitHub URL</label>
+      <input class="filled" value="https://github.com/sushant" />
+    </div>
+  </div>
+  <div class="lever-field">
+    <label>Portfolio (optional)</label>
+    <input class="filled" value="https://sushant.dev" />
+  </div>
+</div>
+
+<div id="jobfill-panel">
+  <div class="jf-header">
+    <span class="jf-logo">JobFill</span>
+    <span class="jf-ats">Lever</span>
+    <button class="jf-x" type="button">×</button>
+  </div>
+  <div class="jf-body">
+    <label class="jf-row">
+      <span>Resume</span>
+      <select class="jf-resume"><option>Backend — sushant_2026.pdf</option></select>
+    </label>
+    <div class="jf-actions">
+      <button class="jf-btn jf-fill" type="button">Autofill form</button>
+      <button class="jf-btn jf-attach" type="button">Attach resume</button>
+    </div>
+    <div class="jf-status">✓ Resume attached · 8 fields filled</div>
+  </div>
+  <div class="jf-footer">
+    <a href="#" class="jf-options">Edit profile / settings</a>
+  </div>
+</div>
+
+</body>
+</html>
