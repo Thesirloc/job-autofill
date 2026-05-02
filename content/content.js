@@ -228,20 +228,40 @@
     for (const t of fields) {
       if (t.dataset.jobfillDecorated) continue;
       t.dataset.jobfillDecorated = "1";
+
+      const wrap = document.createElement("div");
+      wrap.className = "jf-ai-wrap";
+
+      const instr = document.createElement("input");
+      instr.type = "text";
+      instr.className = "jf-ai-instructions";
+      instr.placeholder = "Optional: extra instructions (e.g. mention my X project)";
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "jf-ai-btn";
       btn.textContent = "Draft with AI";
-      btn.addEventListener("click", () => draftAnswer(t, btn));
+      btn.addEventListener("click", () => draftAnswer(t, btn, instr.value.trim()));
+
+      instr.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          btn.click();
+        }
+      });
+
+      wrap.appendChild(instr);
+      wrap.appendChild(btn);
+
       try {
-        t.parentElement?.insertBefore(btn, t);
+        t.parentElement?.insertBefore(wrap, t);
       } catch (_) {
-        document.body.appendChild(btn);
+        document.body.appendChild(wrap);
       }
     }
   }
 
-  async function draftAnswer(textarea, btn) {
+  async function draftAnswer(textarea, btn, userInstructions) {
     const original = btn.textContent;
     btn.disabled = true;
     btn.textContent = "Drafting…";
@@ -264,7 +284,8 @@
         "4. Cite at least one of: company name, project name, technology, or measurable outcome from the profile.\n" +
         "5. Tie the answer to this specific role: reference the company name, the title, or a requirement from the JD.\n" +
         "6. Plain prose. No bullet lists unless the question asks for them. No headings. No em-dashes. No 'I am excited to', 'passionate about', 'thrilled', 'leverage', 'synergy', 'cutting-edge'. No closing sign-off.\n" +
-        `7. Length: ${shape.lengthGuidance}. Stop when you've made the point — do not pad.`;
+        `7. Length: ${shape.lengthGuidance}. Stop when you've made the point — do not pad.\n` +
+        "8. If a USER INSTRUCTIONS block is present, treat it as the highest-priority spec for THIS answer — it overrides the inferred question type, length guidance, and structure suggestions, BUT it never overrides rule 1 (no invention).";
 
       const user =
         `JOB\n` +
@@ -275,6 +296,9 @@
         `CANDIDATE PROFILE\n${profileSummary}\n\n` +
         (matchedSnippet
           ? `CANDIDATE'S OWN PRIOR ANSWER (use as voice + content reference, rewrite for this role):\n${matchedSnippet}\n\n`
+          : "") +
+        (userInstructions
+          ? `USER INSTRUCTIONS (highest priority — follow literally, but do not invent facts):\n${userInstructions}\n\n`
           : "") +
         `QUESTION (label / attributes from the form): ${question}\n` +
         `INFERRED QUESTION TYPE: ${shape.type}\n\n` +
