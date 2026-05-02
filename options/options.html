@@ -119,10 +119,11 @@
         <select id="llm-provider">
           <option value="openai">OpenAI</option>
           <option value="anthropic">Anthropic</option>
+          <option value="gemini">Google Gemini (free tier available)</option>
           <option value="custom">Custom (OpenAI-compatible)</option>
         </select>
       </label>
-      <label>Model <input id="llm-model" placeholder="e.g. gpt-4o-mini" /></label>
+      <label>Model <input id="llm-model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini" /></label>
       <label class="full">API key <input id="llm-api-key" type="password" placeholder="sk-..." /></label>
       <label class="full" id="custom-endpoint-row" style="display:none;">
         Endpoint base URL <input id="llm-endpoint" placeholder="https://api.example.com/v1" />

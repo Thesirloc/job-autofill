@@ -118,6 +118,11 @@ The extension calls the OpenAI API only when the user clicks Draft with AI on a 
 The extension calls the Anthropic API only when the user clicks Draft with AI on a long-answer textarea, or clicks Test connection in the options page. The user supplies their own API key. No request is made automatically or in the background.
 ```
 
+### Host permission — `generativelanguage.googleapis.com`
+```
+The extension calls the Google Gemini API only when the user clicks Draft with AI on a long-answer textarea, or clicks Test connection in the options page. The user supplies their own API key. No request is made automatically or in the background.
+```
+
 ---
 
 ## 8. Data usage disclosures

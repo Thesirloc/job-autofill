@@ -267,6 +267,22 @@ async function testAI() {
         }),
       });
       out.textContent = r.ok ? "OK — Anthropic responded." : `HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`;
+    } else if (provider === "gemini") {
+      const model = state.settings.llmModel || "gemini-2.5-flash";
+      const url =
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+        encodeURIComponent(model) +
+        ":generateContent?key=" +
+        encodeURIComponent(state.settings.llmApiKey);
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "Reply with the single word: ok" }] }],
+          generationConfig: { maxOutputTokens: 20, temperature: 0 },
+        }),
+      });
+      out.textContent = r.ok ? "OK — Gemini responded." : `HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`;
     } else {
       const endpoint = provider === "custom" && state.settings.llmEndpoint
         ? state.settings.llmEndpoint.replace(/\/+$/, "") + "/chat/completions"
