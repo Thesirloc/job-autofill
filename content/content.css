@@ -70,18 +70,46 @@
 #jobfill-panel .jf-options { color: #2563eb; text-decoration: none; }
 #jobfill-panel .jf-options:hover { text-decoration: underline; }
 
-/* Inline "Draft with AI" buttons next to long textareas */
+/* Inline "Draft with AI" controls above long-answer fields */
+.jf-ai-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.jf-ai-wrap input.jf-ai-instructions {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #111827;
+  background: #fff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.jf-ai-wrap input.jf-ai-instructions:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+.jf-ai-wrap input.jf-ai-instructions::placeholder { color: #9ca3af; }
+
 button.jf-ai-btn {
   display: inline-block;
-  margin: 0 0 6px 0;
+  flex: 0 0 auto;
+  margin: 0;
   background: #eef2ff;
   color: #3730a3;
   border: 1px solid #c7d2fe;
   border-radius: 6px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 button.jf-ai-btn:hover { background: #e0e7ff; }
