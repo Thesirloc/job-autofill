@@ -250,24 +250,42 @@
       const profile = data.profile;
       const context = PARSER.getJobContext();
       const question = MATCHER.describeField(textarea) || "(no label)";
-      const snippetsText = (data.snippets || [])
-        .map((s) => `- ${s.label}: ${s.text}`).join("\n");
-      const profileText = JSON.stringify(profile, null, 2);
 
-      const system = "You are helping a candidate draft a job application answer. " +
-        "Write in the candidate's voice: clear, specific, no clichés or em-dashes, no AI tells. " +
-        "Use facts only from the candidate's profile. If the question can't be answered from the profile, " +
-        "leave a single bracketed placeholder like [add example here]. Keep length appropriate for the question.";
+      const shape = classifyQuestion(question, textarea);
+      const profileSummary = buildProfileSummary(profile, context);
+      const matchedSnippet = pickRelevantSnippet(data.snippets || [], question);
+
+      const system =
+        "You draft job-application answers in the candidate's first-person voice. " +
+        "Hard rules:\n" +
+        "1. Use ONLY facts present in the candidate profile below. Never invent a project, role, metric, school, or skill.\n" +
+        "2. If a fact you need is missing, write `[add specific example]` exactly once and continue.\n" +
+        "3. Lead with a concrete project, role, or accomplishment from the profile — not a generic statement of interest.\n" +
+        "4. Cite at least one of: company name, project name, technology, or measurable outcome from the profile.\n" +
+        "5. Tie the answer to this specific role: reference the company name, the title, or a requirement from the JD.\n" +
+        "6. Plain prose. No bullet lists unless the question asks for them. No headings. No em-dashes. No 'I am excited to', 'passionate about', 'thrilled', 'leverage', 'synergy', 'cutting-edge'. No closing sign-off.\n" +
+        `7. Length: ${shape.lengthGuidance}. Stop when you've made the point — do not pad.`;
 
       const user =
-        `JOB CONTEXT\nCompany: ${context.company}\nTitle: ${context.title}\nLocation: ${context.jobLocation}\n` +
-        `Description: ${context.description.slice(0, 1500)}\n\n` +
-        `CANDIDATE PROFILE (JSON)\n${profileText}\n\n` +
-        `REUSABLE SNIPPETS\n${snippetsText || "(none)"}\n\n` +
-        `QUESTION FIELD\n${question}\n\n` +
-        `Write the answer text only — no preamble, no quotes.`;
+        `JOB\n` +
+        `Company: ${context.company || "(unknown)"}\n` +
+        `Title: ${context.title || "(unknown)"}\n` +
+        (context.jobLocation ? `Location: ${context.jobLocation}\n` : "") +
+        `JD excerpt:\n${(context.description || "(none)").slice(0, 1800)}\n\n` +
+        `CANDIDATE PROFILE\n${profileSummary}\n\n` +
+        (matchedSnippet
+          ? `CANDIDATE'S OWN PRIOR ANSWER (use as voice + content reference, rewrite for this role):\n${matchedSnippet}\n\n`
+          : "") +
+        `QUESTION (label / attributes from the form): ${question}\n` +
+        `INFERRED QUESTION TYPE: ${shape.type}\n\n` +
+        `Write the answer text only. No preamble, no quotes, no signature.`;
 
-      const draft = await LLM.chat({ system, user, temperature: 0.5, maxTokens: 600 });
+      const draft = await LLM.chat({
+        system,
+        user,
+        temperature: 0.25,
+        maxTokens: shape.maxTokens,
+      });
       MATCHER.setFieldValue(textarea, draft.trim());
       btn.textContent = "Re-draft";
     } catch (e) {
@@ -277,6 +295,115 @@
     } finally {
       btn.disabled = false;
     }
+  }
+
+  /* ---------- prompt helpers ---------- */
+
+  function classifyQuestion(label, textarea) {
+    const l = (label || "").toLowerCase();
+    const maxLen = parseInt(textarea.getAttribute("maxlength") || "0", 10);
+    const rows = parseInt(textarea.getAttribute("rows") || "0", 10);
+
+    if (/yes\/?no|are you|do you|have you|will you|can you/i.test(l) && (maxLen && maxLen < 50)) {
+      return { type: "yes/no", lengthGuidance: "one word: Yes or No", maxTokens: 10 };
+    }
+    if (maxLen && maxLen <= 250) {
+      return { type: "one-sentence", lengthGuidance: `1 sentence, max ${maxLen} characters`, maxTokens: 120 };
+    }
+    if (/cover\s*letter/.test(l)) {
+      return { type: "cover letter", lengthGuidance: "3 short paragraphs (~180–240 words total). Hook, fit, close.", maxTokens: 500 };
+    }
+    if (/why.*(this|us|company|role|join|interested)/.test(l) || /interest/.test(l)) {
+      return { type: "why this company/role", lengthGuidance: "2 short paragraphs (~110–160 words). First: a specific thing about THIS company/role from the JD that draws you. Second: the most relevant project from your profile that proves fit.", maxTokens: 350 };
+    }
+    if (/proud|accomplish|achievement|impact|biggest/.test(l)) {
+      return { type: "accomplishment story", lengthGuidance: "1 paragraph (~110–150 words) using situation→action→outcome. Name a metric.", maxTokens: 320 };
+    }
+    if (/tell us about|describe yourself|background|introduce/.test(l)) {
+      return { type: "self-intro", lengthGuidance: "3–4 sentences (~80–120 words). Current role, 1–2 signature projects, why this kind of role next.", maxTokens: 260 };
+    }
+    if (/challenge|difficult|hardest|problem|conflict|failure|mistake/.test(l)) {
+      return { type: "STAR story", lengthGuidance: "1 paragraph (~120–160 words). Situation, action, outcome. Be honest about the difficulty.", maxTokens: 340 };
+    }
+    if (/strength|weakness/.test(l)) {
+      return { type: "strength/weakness", lengthGuidance: "3–4 sentences (~70–100 words) grounded in a real example from the profile.", maxTokens: 220 };
+    }
+    if (/salary|compensation|expect/.test(l)) {
+      return { type: "compensation", lengthGuidance: "One short sentence. If no preference is in the profile, write `[your target range]`.", maxTokens: 60 };
+    }
+    if (/availability|notice|start\s*date/.test(l)) {
+      return { type: "availability", lengthGuidance: "One short sentence.", maxTokens: 50 };
+    }
+    if (rows >= 8 || (maxLen && maxLen >= 1500)) {
+      return { type: "long essay", lengthGuidance: "3–4 paragraphs (~250–350 words). Specific, structured, not flowery.", maxTokens: 700 };
+    }
+    return { type: "open-ended paragraph", lengthGuidance: "1–2 paragraphs (~100–150 words). Specific, not generic.", maxTokens: 320 };
+  }
+
+  function buildProfileSummary(p, ctx) {
+    const lines = [];
+    const fullName = [p.firstName, p.lastName].filter(Boolean).join(" ");
+    if (fullName) lines.push(`Name: ${fullName}`);
+    if (p.summary) lines.push(`Summary: ${p.summary}`);
+    if (p.skills?.length) lines.push(`Skills: ${p.skills.join(", ")}`);
+
+    const jdText = ((ctx.description || "") + " " + (ctx.title || "")).toLowerCase();
+    const ranked = (p.workHistory || [])
+      .map((w, i) => ({ w, i, score: scoreWorkRelevance(w, jdText) }))
+      .sort((a, b) => b.score - a.score || a.i - b.i)
+      .slice(0, 3)
+      .map(({ w }) => w);
+
+    if (ranked.length) {
+      lines.push("\nMost relevant roles (use these as the source of stories):");
+      for (const w of ranked) {
+        const range = [w.start, w.end].filter(Boolean).join("–");
+        lines.push(`  • ${w.title || "(role)"} at ${w.company || "(company)"}${range ? ` (${range})` : ""}`);
+        if (w.description) {
+          const trimmed = w.description.replace(/\s+/g, " ").trim().slice(0, 500);
+          lines.push(`    ${trimmed}`);
+        }
+      }
+    }
+
+    if (p.education?.length) {
+      const e = p.education[0];
+      const ed = [e.degree, e.field, e.school].filter(Boolean).join(", ");
+      if (ed) lines.push(`\nEducation: ${ed}`);
+    }
+
+    return lines.join("\n");
+  }
+
+  function scoreWorkRelevance(work, jdText) {
+    const haystack = ((work.title || "") + " " + (work.description || "")).toLowerCase();
+    const tokens = haystack.split(/[^a-z0-9+#.]+/).filter((t) => t.length > 3);
+    let score = 0;
+    const seen = new Set();
+    for (const t of tokens) {
+      if (seen.has(t)) continue;
+      seen.add(t);
+      if (jdText.includes(t)) score++;
+    }
+    return score;
+  }
+
+  function pickRelevantSnippet(snippets, question) {
+    if (!snippets.length) return null;
+    const q = (question || "").toLowerCase();
+    let best = null;
+    let bestScore = 0;
+    for (const s of snippets) {
+      const label = (s.label || "").toLowerCase();
+      if (!label) continue;
+      const tokens = label.split(/[^a-z0-9]+/).filter((t) => t.length > 2);
+      const score = tokens.reduce((acc, t) => acc + (q.includes(t) ? 1 : 0), 0);
+      if (score > bestScore) {
+        bestScore = score;
+        best = s;
+      }
+    }
+    return best && bestScore > 0 ? best.text : null;
   }
 
   /* ---------------- Messages from popup ---------------- */
