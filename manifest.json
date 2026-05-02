@@ -2,8 +2,12 @@
   "manifest_version": 3,
   "name": "JobFill — AI Job Application Autofill",
   "version": "0.1.0",
-  "description": "Autofill job applications on Greenhouse, Lever, and Workday using your profile and resumes. Optional AI drafts for open-ended questions.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "description": "One-click autofill for Greenhouse, Lever, and Workday job applications. Optional AI drafts. Local-first — no tracking.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
   "host_permissions": [
     "https://boards.greenhouse.io/*",
     "https://job-boards.greenhouse.io/*",
@@ -60,15 +64,21 @@
         "content/adapters/workday.js",
         "content/content.js"
       ],
-      "css": ["content/content.css"],
+      "css": [
+        "content/content.css"
+      ],
       "run_at": "document_idle",
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "icons/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
