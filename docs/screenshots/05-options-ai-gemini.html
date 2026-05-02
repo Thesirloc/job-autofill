@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>JobFill — Options · AI / API</title>
+<style>
+  /* Mirrors options/options.css. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    width: 1280px;
+    height: 800px;
+    overflow: hidden;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+  header h1 { margin: 0; font-size: 22px; }
+  header .sub { color: #6b7280; margin: 4px 0 24px; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
+  .tab {
+    background: transparent; border: 0; padding: 10px 14px; font-size: 13px;
+    color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab.active { color: #111827; border-bottom-color: #111827; font-weight: 600; }
+
+  .tab-pane {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 24px;
+  }
+
+  h2 {
+    font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #374151; margin: 24px 0 8px;
+  }
+  h2:first-child { margin-top: 0; }
+  .hint { color: #6b7280; font-size: 13px; margin: 0 0 16px; line-height: 1.5; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #374151; }
+  label.full { grid-column: 1 / -1; }
+  input, select {
+    font: inherit; font-size: 13px; padding: 8px 10px;
+    border: 1px solid #d1d5db; border-radius: 6px; background: #fff;
+  }
+
+  .save-bar { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+  button {
+    background: #4b5563; color: #fff; border: 0; border-radius: 6px;
+    padding: 9px 16px; font-size: 13px; cursor: pointer; font-weight: 500;
+  }
+  button.primary { background: #111827; }
+  .saved { font-size: 12px; color: #047857; font-weight: 500; }
+
+  .test-out {
+    margin-top: 16px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #047857;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  .callout {
+    margin-top: 18px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    color: #3730a3;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .callout strong { color: #312e81; }
+  .callout a { color: #1d4ed8; text-decoration: none; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JobFill</h1>
+    <p class="sub">Your profile, resumes, and AI settings — all stored locally in your browser.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab">Profile</button>
+    <button class="tab">Resumes</button>
+    <button class="tab">Answer snippets</button>
+    <button class="tab active">AI / API</button>
+    <button class="tab">Data</button>
+  </nav>
+
+  <section class="tab-pane">
+    <h2>AI provider</h2>
+    <p class="hint">
+      Used only when you click "Draft with AI" on a long-answer field. Keys are stored locally and sent only to the provider you select.
+    </p>
+
+    <div class="grid">
+      <label>
+        Provider
+        <select>
+          <option>OpenAI</option>
+          <option>Anthropic</option>
+          <option selected>Google Gemini (free tier available)</option>
+          <option>Custom (OpenAI-compatible)</option>
+        </select>
+      </label>
+      <label>
+        Model
+        <input value="gemini-2.5-flash" />
+      </label>
+      <label class="full">
+        API key
+        <input type="password" value="•••••••••••••••••••••••••••••••••••" />
+      </label>
+    </div>
+
+    <div class="save-bar">
+      <button class="primary">Save AI settings</button>
+      <button>Test connection</button>
+      <span class="saved">✓ Saved</span>
+    </div>
+    <div class="test-out">OK — Gemini responded.</div>
+
+    <div class="callout">
+      <strong>Free tier:</strong> Google Gemini's free API key works out of the box for "Draft with AI" — no credit card required. Get one at
+      <a href="#">aistudio.google.com/apikey</a>, paste it above, and click Test connection.
+    </div>
+  </section>
+</div>
+</body>
+</html>

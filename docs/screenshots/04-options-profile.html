@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>JobFill — Options · Profile</title>
+<style>
+  /* Mirrors options/options.css so the screenshot matches the real extension UI. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    width: 1280px;
+    height: 800px;
+    overflow: hidden;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+  header h1 { margin: 0; font-size: 22px; }
+  header .sub { color: #6b7280; margin: 4px 0 24px; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
+  .tab {
+    background: transparent; border: 0; padding: 10px 14px; font-size: 13px;
+    color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tab.active { color: #111827; border-bottom-color: #111827; font-weight: 600; }
+
+  .tab-pane {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 24px;
+  }
+
+  h2 {
+    font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #374151; margin: 24px 0 8px;
+  }
+  h2:first-child { margin-top: 0; }
+  .hint { color: #6b7280; font-size: 12px; margin: 0 0 12px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #374151; }
+  label.full { grid-column: 1 / -1; }
+  input, select, textarea {
+    font: inherit; font-size: 13px; padding: 8px 10px;
+    border: 1px solid #d1d5db; border-radius: 6px; background: #fff;
+  }
+  textarea { width: 100%; resize: none; font-family: inherit; }
+
+  .entry {
+    border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin: 8px 0;
+    background: #f9fafb;
+  }
+  .entry .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .entry textarea { margin-top: 8px; min-height: 38px; }
+  .entry .remove {
+    float: right; background: transparent; color: #b91c1c;
+    border: 0; font-size: 11px; cursor: pointer;
+  }
+
+  button.ghost {
+    background: transparent; color: #2563eb; padding: 4px 0;
+    border: 0; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JobFill</h1>
+    <p class="sub">Your profile, resumes, and AI settings — all stored locally in your browser.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active">Profile</button>
+    <button class="tab">Resumes</button>
+    <button class="tab">Answer snippets</button>
+    <button class="tab">AI / API</button>
+    <button class="tab">Data</button>
+  </nav>
+
+  <section class="tab-pane">
+    <h2>Identity</h2>
+    <div class="grid">
+      <label>First name <input value="Sushant" /></label>
+      <label>Last name <input value="Singh" /></label>
+      <label>Email <input value="sushant@example.com" /></label>
+      <label>Phone <input value="+1 (415) 555-0142" /></label>
+    </div>
+
+    <h2>Links</h2>
+    <div class="grid">
+      <label>LinkedIn <input value="https://linkedin.com/in/sushant" /></label>
+      <label>GitHub <input value="https://github.com/sushant" /></label>
+      <label>Portfolio <input value="https://sushant.dev" /></label>
+      <label>Twitter / X <input value="@sushant_dev" /></label>
+    </div>
+
+    <h2>Profile summary</h2>
+    <p class="hint">A 2–4 sentence pitch the AI will use as background for drafted answers.</p>
+    <textarea rows="3">Senior backend engineer with 6 years building distributed systems in Go and Postgres. Most recent: rebuilt Lumen's order-routing service on Kafka, cutting p99 latency from 480ms to 95ms. Looking for an IC role where I own end-to-end design.</textarea>
+
+    <h2>Work history</h2>
+    <p class="hint">Most recent first. The first entry is used for "current company / title" autofill.</p>
+    <div class="entry">
+      <button class="remove">remove</button>
+      <div class="row">
+        <label>Company <input value="Lumen" /></label>
+        <label>Title <input value="Senior Backend Engineer" /></label>
+        <label>Start <input value="2023-04" /></label>
+        <label>End <input value="Present" /></label>
+      </div>
+      <textarea rows="2">Rebuilt order-routing on Kafka, idempotent consumers, cut p99 480ms→95ms. Owned the Postgres→Citus shard migration.</textarea>
+    </div>
+    <div class="entry">
+      <button class="remove">remove</button>
+      <div class="row">
+        <label>Company <input value="Vertex Data" /></label>
+        <label>Title <input value="Backend Engineer" /></label>
+        <label>Start <input value="2020-08" /></label>
+        <label>End <input value="2023-03" /></label>
+      </div>
+      <textarea rows="2">Built ETL platform processing 4B events/day. Designed schema-evolution layer that removed Friday-night migration toil.</textarea>
+    </div>
+    <button class="ghost">+ Add role</button>
+  </section>
+</div>
+</body>
+</html>
