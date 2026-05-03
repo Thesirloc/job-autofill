@@ -88,11 +88,6 @@ Stores the user's profile (name, contact info, work history, education), uploade
 Used to read the active job application page when the user opens the popup or clicks an action button, so the extension can detect the ATS (Greenhouse, Lever, or Workday) and populate fields. Activated only in response to user interaction with the extension.
 ```
 
-### `scripting`
-```
-Used to programmatically inject the autofill logic into the active tab when the user clicks Autofill in the popup. Combined with activeTab, this scopes injection to a user-initiated action on the current page.
-```
-
 ### Host permissions — Greenhouse (`*.greenhouse.io`, `boards.greenhouse.io`, `job-boards.greenhouse.io`)
 ```
 The content script runs on Greenhouse-hosted application forms to detect input fields, populate them from the user's saved profile, and attach the selected resume to the file input.
