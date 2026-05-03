@@ -1,12 +1,11 @@
 {
   "manifest_version": 3,
   "name": "JobFill — AI Job Application Autofill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One-click autofill for Greenhouse, Lever, and Workday job applications. Optional AI drafts. Local-first — no tracking.",
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
     "https://boards.greenhouse.io/*",
