@@ -82,3 +82,16 @@ job-autofill/
 ## Extending
 
 To add another ATS, drop a new file under `content/adapters/` exporting `name()`, `detect()`, `findResumeInput()`, and (optionally) `findCoverLetterTextarea()`. Register the path in `manifest.json` `content_scripts.js` and add the host to `host_permissions` and `matches`.
+
+## Releasing
+
+Releases are automated. Every push to `main` (excluding docs-only and `web/`-only changes) bumps the version using Conventional Commits, builds `dist/jobfill-v<version>.zip`, tags + creates a GitHub Release, and uploads the zip to the Chrome Web Store as a draft. See [docs/RELEASING.md](docs/RELEASING.md) for the bump rules and the one-time Web Store credential setup.
+
+To build locally without going through CI:
+
+```bash
+bash scripts/build.sh        # macOS / Linux / WSL / Git Bash (needs `zip`)
+.\scripts\build.ps1          # Windows PowerShell
+```
+
+Both produce `dist/unpacked/` (point Chrome's "Load unpacked" at it) and `dist/jobfill-v<version>.zip`.

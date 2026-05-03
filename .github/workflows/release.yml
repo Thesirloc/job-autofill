@@ -1,0 +1,131 @@
+name: Release
+
+# Auto-bump version and ship the extension on every push to main.
+#
+# What runs:
+#   1. Determine the next version from Conventional Commits since the last tag.
+#   2. Patch manifest.json with the new version.
+#   3. Build dist/jobfill-v<version>.zip.
+#   4. Commit the bump, tag v<version>, and push both back to main.
+#   5. Create a GitHub Release with the zip attached.
+#   6. If Chrome Web Store secrets are configured, upload the zip as a DRAFT
+#      (no auto-publish). Submit-for-review remains a manual click in the
+#      Developer Dashboard.
+#
+# Conventional-commit mapping for the bump:
+#   "BREAKING CHANGE" footer or "<type>!:" subject => major
+#   "feat:" or "feat(scope):"                       => minor
+#   anything else (fix, chore, docs, refactor, …)   => patch
+#
+# Skipping releases for non-shipping changes: paths-ignore below excludes
+# docs-only / web-only / markdown-only commits.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'web/**'
+      - '*.md'
+      - '.gitignore'
+      - '.github/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Defense-in-depth: skip the bot's own bump commit. Commits pushed via the
+    # default GITHUB_TOKEN do not normally re-trigger workflows, but this guard
+    # makes the behavior explicit and survives token swaps.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute next version
+        id: bump
+        run: |
+          set -euo pipefail
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -z "${LAST_TAG:-}" ]; then
+            COMMITS=$(git log --pretty=%B)
+          else
+            COMMITS=$(git log "$LAST_TAG"..HEAD --pretty=%B)
+          fi
+
+          BUMP=patch
+          if echo "$COMMITS" | grep -qE "(^|[[:space:]])BREAKING CHANGE|^[a-zA-Z]+(\([^)]*\))?!:"; then
+            BUMP=major
+          elif echo "$COMMITS" | grep -qE "^feat(\(|:)"; then
+            BUMP=minor
+          fi
+
+          CUR=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' manifest.json | head -n 1)
+          IFS=. read -r MAJ MIN PAT <<< "$CUR"
+          case "$BUMP" in
+            major) MAJ=$((MAJ+1)); MIN=0; PAT=0 ;;
+            minor) MIN=$((MIN+1)); PAT=0 ;;
+            patch) PAT=$((PAT+1)) ;;
+          esac
+          NEW="$MAJ.$MIN.$PAT"
+
+          {
+            echo "current=$CUR"
+            echo "new=$NEW"
+            echo "bump=$BUMP"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Bump: $CUR -> $NEW ($BUMP)"
+
+      - name: Patch manifest.json
+        run: |
+          NEW="${{ steps.bump.outputs.new }}"
+          sed -i "s/\"version\":[[:space:]]*\"[^\"]*\"/\"version\": \"$NEW\"/" manifest.json
+          grep '"version"' manifest.json
+
+      - name: Build extension zip
+        run: bash scripts/build.sh
+
+      - name: Commit bump and push tag
+        run: |
+          NEW="${{ steps.bump.outputs.new }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "chore(release): v$NEW"
+          git tag "v$NEW"
+          git push origin HEAD:main
+          git push origin "v$NEW"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.new }}
+          name: v${{ steps.bump.outputs.new }}
+          files: dist/jobfill-v${{ steps.bump.outputs.new }}.zip
+          generate_release_notes: true
+
+      - name: Upload draft to Chrome Web Store
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CLIENT_ID:    ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          if [ -z "${CLIENT_ID:-}" ] || [ -z "${EXTENSION_ID:-}" ]; then
+            echo "::warning::Chrome Web Store credentials not set; skipping upload. See docs/RELEASING.md for setup."
+            exit 0
+          fi
+          NEW="${{ steps.bump.outputs.new }}"
+          npx -y chrome-webstore-upload-cli@3 upload \
+            --source "dist/jobfill-v${NEW}.zip"
+          echo "Uploaded v${NEW} to the Chrome Web Store as a draft. Submit for review manually."
